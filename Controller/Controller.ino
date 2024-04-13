@@ -4,6 +4,7 @@ enum sensorCodesEnum { JOY1,
   KNOB2,
   KNOB3,
   KNOB4,
+  TEMP,
   SENSORS_SIZE 
 };
 
@@ -14,12 +15,13 @@ enum pinCode {
   PIN_J2Y = A3 ,
   PIN_K1CLK = 2,
   PIN_K1DT = 3,
-  PIN_K2CLK = A6,
-  PIN_K2DT = A7,
-  PIN_K3CLK = A8,
-  PIN_K3DT = A9,
-  PIN_K4CLK = A10,
-  PIN_K4DT = A11,
+  PIN_K2CLK = 4,
+  PIN_K2DT = 5,
+  PIN_K3CLK = 6,
+  PIN_K3DT = 7,
+  PIN_K4CLK = 8,
+  PIN_K4DT = 9,
+  PIN_TEMP = A4,
 };
 
 enum commandsEnum {
@@ -33,18 +35,18 @@ struct KnobDat{
   int CLK_state;
   int prev_CLK_state;
 
-  short CLK_pin;
-  short DT_pin;
+  int CLK_pin;
+  int DT_pin;
 
-  KnobDat(short CLK_pin_, short DT_pin_) : CLK_pin{CLK_pin_}, CLK_state{DT_pin_}{
+  KnobDat(int CLK_pin_, int DT_pin_) : CLK_pin{CLK_pin_}, DT_pin{DT_pin_}{
 
   }
 
   void hanldeKnob(){
-    CLK_state = digitalRead(CLK_pin);
+    this->CLK_state = digitalRead(this->CLK_pin);
 
-    if(CLK_state != prev_CLK_state && CLK_state == HIGH){
-      if(digitalRead(DT_pin) == HIGH){
+    if(this->CLK_state != this->prev_CLK_state && this->CLK_state == HIGH){
+      if(digitalRead(this->DT_pin) == HIGH){
         counter--;
         direction = 1;
 
@@ -53,7 +55,7 @@ struct KnobDat{
         direction = 0;
       }
     }
-    prev_CLK_state = CLK_state;
+    this->prev_CLK_state = this->CLK_state;
 
     Serial.print(counter);
     Serial.print(',');
@@ -114,6 +116,10 @@ void handleSensor(short code) {
     case KNOB4:
       knob4.hanldeKnob();
       break;
+
+    case TEMP:
+      handleTemp();
+      break;
   }
 }
 
@@ -129,6 +135,20 @@ void handleJoystick2() {
   Serial.print(analogRead(PIN_J2X));
   Serial.print(',');
   Serial.print(analogRead(PIN_J2Y));
+  Serial.print(',');
+}
+
+void handleTemp(){
+  int currTemp = analogRead(PIN_TEMP);
+
+  double r2 = (currTemp * 100000) / (1024 - currTemp);
+  r2 /= 1000;
+  double cTemp = 0.0018 * pow(r2, 2) + -0.6001 * r2 + 66.5213;
+  Serial.print(currTemp);
+  Serial.print(',');
+  Serial.print(r2);
+  Serial.print(',');
+  Serial.print(cTemp);
   Serial.print(',');
 }
 
