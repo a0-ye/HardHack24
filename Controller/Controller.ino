@@ -33,7 +33,14 @@ struct KnobDat{
   int CLK_state;
   int prev_CLK_state;
 
-  void hanldeKnob(int CLK_pin, int DT_pin){
+  short CLK_pin;
+  short DT_pin;
+
+  KnobDat(short CLK_pin_, short DT_pin_) : CLK_pin{CLK_pin_}, CLK_state{DT_pin_}{
+
+  }
+
+  void hanldeKnob(){
     CLK_state = digitalRead(CLK_pin);
 
     if(CLK_state != prev_CLK_state && CLK_state == HIGH){
@@ -56,7 +63,10 @@ struct KnobDat{
 const char *commands[] = { "KNOB" };
 bool active[SENSORS_SIZE] = {true};
 
-struct KnobDat KnobDatList[4];
+KnobDat knob1(PIN_K1CLK, PIN_K1DT);
+KnobDat knob2(PIN_K2CLK, PIN_K2DT);
+KnobDat knob3(PIN_K3CLK, PIN_K3DT);
+KnobDat knob4(PIN_K4CLK, PIN_K4DT);
 
 void setup() {
   Serial.begin(115200);
@@ -90,19 +100,19 @@ void handleSensor(short code) {
       break;
 
     case KNOB1:
-      KnobDatList[code - KNOB1].hanldeKnob(PIN_K1CLK, PIN_K1DT);
+      knob1.hanldeKnob();
       break;
 
     case KNOB2:
-      KnobDatList[code - KNOB1].hanldeKnob(PIN_K2CLK, PIN_K2DT);
+      knob2.hanldeKnob();
       break;
 
     case KNOB3:
-      KnobDatList[code - KNOB1].hanldeKnob(PIN_K3CLK, PIN_K3DT);
+      knob3.hanldeKnob();
       break;
 
     case KNOB4:
-      KnobDatList[code - KNOB1].hanldeKnob(PIN_K4CLK, PIN_K4DT);
+      knob4.hanldeKnob();
       break;
   }
 }
