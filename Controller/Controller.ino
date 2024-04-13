@@ -53,10 +53,10 @@ struct KnobDat{
   }
 };
 
-struct KnobDat KnobDatList[4];
-
 const char *commands[] = { "KNOB" };
 bool active[SENSORS_SIZE] = {true};
+
+struct KnobDat KnobDatList[4];
 
 void setup() {
   Serial.begin(115200);
