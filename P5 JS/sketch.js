@@ -29,9 +29,14 @@ function draw(){
     background(220);
 
     temp = getTemp();
-    tempGraph.displayBarBase();
-    tempGraph.displaySliderBar(temp);
-    tempGraph.displayTargetZone();
+    if(tempGraph.finished == false){
+        tempGraph.displayBarBase();
+        tempGraph.displaySliderBar(temp);
+        tempGraph.displayTargetZone();
+        tempGraph.zoneCheck();
+    } else{
+        alert("VICTORY: YOU DID IT!!!");
+    }
 
     circle(mouseX, mouseY, 30);
 }
@@ -39,11 +44,14 @@ function draw(){
 class BarGraph{
     constructor(){}
 
+
     tempBarBaseDat = {x:0,y:-75,width:80,height:400};
     targetRangeDat = {upper:0,lower:0,width:0,height:0};
+    // time in millis, time in millis, 1 == was in zone prev, 0 == not in zone prev
+    zoneCheckDat = {startTime:0,timeFrac:0}
     
     // finished is a flag for whether or not we are done with our game!
-    finished = 0;
+    finished = false;
 
 
     displayBarBase(){
@@ -85,7 +93,7 @@ class BarGraph{
 
         strokeWeight(2);
         stroke('#222222');
-        fill(253, 169, 43,50);
+        fill(253, 169, 43,(100 * this.zoneCheckDat.timeFrac ));
         rect(this.tempBarBaseDat.x,
             (this.tempBarBaseDat.y + this.tempBarBaseDat.height - 5) - this.getHeightForTemp(this.targetRangeDat.upper),
             this.targetRangeDat.width,
@@ -116,7 +124,12 @@ class BarGraph{
         let brightness = 100;
         return color(hue, saturation, brightness);
     }
-
+    getColorForTime(diff) {
+        let hue = map(temp, 20, 40, 0, 240);
+        let saturation = 100;
+        let brightness = 100;
+        return color(hue, saturation, brightness);
+    }
     
     /**
      * generates a target range between 25 and 38
@@ -126,11 +139,27 @@ class BarGraph{
         this.targetRangeDat.upper = random(25, 38);
         this.targetRangeDat.lower = this.targetRangeDat.upper - 2;
         this.targetRangeDat.width = this.tempBarBaseDat.width;
-        this.targetRangeDat.height = 30;
+        this.targetRangeDat.height = this.getHeightForTemp(this.targetRangeDat.upper) - this.getHeightForTemp(this.targetRangeDat.lower);
 
         console.log("Upper: ",this.targetRangeDat.upper);
         console.log("height proportional: ",this.getHeightForTemp(this.targetRangeDat.upper) / this.tempBarBaseDat.height);
     }
     
+
+    /**
+     * if not in zone, update start time.
+     * when we're in the loop, we start comparing curr time to the start time because we stop updating it
+     */
+    zoneCheck(){
+        if(temps <= this.targetRangeDat.upper && temps >= this.targetRangeDat.lower){
+            if( millis() - this.zoneCheckDat.startTime >= 5000){    // 5 seconds
+                this.finished = true;
+            }
+        } else {
+            this.zoneCheckDat.startTime = millis();
+        }
+        this.zoneCheckDat.timeFrac = (5000 - (millis() - this.zoneCheckDat.startTime)) / 5000
+        console.log("timefrac: ",this.zoneCheckDat.timeFrac);
+    }
 }
 
