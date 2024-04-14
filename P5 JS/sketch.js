@@ -1,5 +1,18 @@
 let tempGraph;
-let temp = 25;
+let temps = [];
+let count = 0;
+
+for (let i = 20; i < 41; i++) {
+    console.log(temps);
+    temps.push(i)
+}
+console.log(temps)
+
+function getTemp() {
+    count++;
+    console.log(count%20);
+    return temps[count%20];
+}
 
 
 
@@ -53,10 +66,14 @@ class BarGraph{
         strokeWeight(2);
         stroke('#222222');
         fill(slider.color);
+        // rect(this.tempBarBaseDat.x + ( (this.tempBarBaseDat.w - slider.width) / 2 ),
+        //     this.tempBarBaseDat.y + ( (this.tempBarBaseDat.h - slider.height) / 2 ),
+        //     slider.width,
+        //     slider.height);
         rect(this.tempBarBaseDat.x + ( (this.tempBarBaseDat.w - slider.width) / 2 ),
-            this.tempBarBaseDat.y + ( (this.tempBarBaseDat.h - slider.height) / 2 ),
+            this.tempBarBaseDat.y + this.tempBarBaseDat.h - 5,
             slider.width,
-            slider.height);
+            -slider.height);
         
         pop();
     }
@@ -81,7 +98,7 @@ function getSliderDat(){
  * the range of temp is apparently 23 to 38 ish... figure out a formula
  */
 function getHeightForTemp() {
-    let result = temp + 25;
+    let result = getTemp() + 25;
     if (result < 30){
         result = 45;
     } else if (result > 375){
