@@ -329,21 +329,23 @@ class KnobGame{
 
 class StickGame{
     constructor(){
-        this.targetDat = this.generateTarget();
+        this.targetVal = this.generateTarget();
         this.baseDat = {x:0,y:0,r:300};
         this.sliderDat = {x:0,y:0,r:100};
         this.targetStart = millis();
-        this.ratioDat = {j1x:0,j1y:0,j2x:0,j2y:0}
+        this.ratioVal = 0;
+        this.finished = false;
 
     }
 
     generateTarget(){
         let upper = 1024
         let lower = 0
-        return {t1x:random(lower,upper),
-            t1y:random(lower,upper),
-            t2x:random(lower,upper),
-            t2y:random(lower,upper)}
+        return this.distanceInR4(random(lower,upper),random(lower,upper),random(lower,upper),random(lower,upper))
+    }
+    
+    distanceInR4(a,b,c,d){
+        sqrt(pow(a,2) + pow(b,2) + pow(c,2) + pow(d, 2))
     }
 
     ratio(current,target){
@@ -353,24 +355,12 @@ class StickGame{
     scaleSlider(){
         //lower bound value is 10, highest is 50
         let lower = 100;
-        let total = this.baseDat.r - lower
-        let sharedAmount = total / 4;
-        let sum = 0;
+        let diff = this.baseDat.r - lower
         
-        this.ratioDat.j1x = this.ratio(joy1.x, this.targetDat.t1x)
-        sum += this.ratioDat.j1x * sharedAmount;
+        //ratio of similarity in R4
+        this.ratioVal = ratio(this.distanceInR4(joy1.x,joy1.y,joy2.x,joy2.y), this.targetVal)
 
-        this.ratioDat.j1y = this.ratio(joy1.y, this.targetDat.t1y)
-        sum += this.ratioDat.j1y * sharedAmount;
-
-        this.ratioDat.j2x = this.ratio(joy2.x, this.targetDat.t2x)
-        sum += this.ratioDat.j2x * sharedAmount;
-        
-        this.ratioDat.j2y = this.ratio(joy2.y, this.targetDat.t2y)
-        sum += this.ratioDat.j2y * sharedAmount;
-
-
-        this.sliderDat.r = lower + sum;
+        this.sliderDat.r = lower + (diff * this.ratioVal);
         
     }
 
@@ -399,7 +389,7 @@ class StickGame{
         push();
         translate(width / 2, height / 3);
 
-        fill(57, 253, 43, 1 - this.timeFrac);
+        fill(57, 253, 43, (1 - this.timeFrac) * 100);
         stroke('#222222');
 
         circle(this.sliderDat.x, this.sliderDat.y, this.sliderDat.r);
@@ -408,12 +398,10 @@ class StickGame{
     }
 
     checkTarget(){
-        let threshold = 0.08
+        let threshold = 0.08;
         //95% threshhold for 5 seconds
-        if(this.ratioDat.j1x >=  threshold &&
-            this.ratioDat.j1y >= threshold &&
-            this.ratioDat.j2x >= threshold &&
-            this.ratioDat.j2y >= threshold ){
+        console.log(this.targetDat);
+        if(this.ratioVal <= threshold ){
             if( millis() - this.targetStart >= 5000){    // 5 seconds
                 this.done = true;
             }
