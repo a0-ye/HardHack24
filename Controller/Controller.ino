@@ -1,10 +1,12 @@
-enum sensorCodesEnum { JOY1,
+enum sensorCodesEnum { 
+  JOY1,
   JOY2,
   KNOB1,
   KNOB2,
   KNOB3,
   KNOB4,
   TEMP,
+  PEDAL,
   SENSORS_SIZE 
 };
 
@@ -22,6 +24,7 @@ enum pinCode {
   PIN_K4CLK = 8,
   PIN_K4DT = 9,
   PIN_TEMP = A4,
+  PIN_PEDAL = A5
 };
 
 enum commandsEnum {
@@ -62,7 +65,6 @@ struct KnobDat{
   }
 };
 
-const char *commands[] = { "KNOB" };
 bool active[SENSORS_SIZE] = {true};
 
 KnobDat knob1(PIN_K1CLK, PIN_K1DT);
@@ -76,8 +78,6 @@ void setup() {
 
 void loop() {
   loadSensorData();
-
-  //send all our data!
   Serial.println();
 }
 
@@ -120,6 +120,11 @@ void handleSensor(short code) {
     case TEMP:
       handleTemp();
       break;
+
+    case PEDAL:
+      handlePedal();
+      break;
+
   }
 }
 
@@ -143,12 +148,14 @@ void handleTemp(){
 
   double r2 = (currTemp * 100000) / (1024 - currTemp);
   r2 /= 1000;
-  double cTemp = 0.0018 * pow(r2, 2) + -0.6001 * r2 + 66.5213;
-  Serial.print(currTemp);
+  double temp = 0.0018 * pow(r2, 2) + -0.6001 * r2 + 66.5213;
+
+  Serial.print(temp);
   Serial.print(',');
-  Serial.print(r2);
-  Serial.print(',');
-  Serial.print(cTemp);
+}
+
+void handlePedal(){
+  Serial.print(analogRead(PIN_PEDAL));
   Serial.print(',');
 }
 
