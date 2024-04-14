@@ -1,12 +1,19 @@
 let tempGraph;
 let temp = 25;
 
+
+
+
+
+
 function setup(){
     createCanvas(windowWidth, windowHeight);
     frameRate(60);
     angleMode(DEGREES);
 
     tempGraph = new BarGraph();
+    
+
 
 }
 
@@ -22,6 +29,8 @@ function draw(){
 class BarGraph{
     constructor(){}
 
+    tempBarBaseDat = {x:0,y:-75,w:80,h:400};
+
     displayBarBase(){
         push();
 
@@ -29,7 +38,7 @@ class BarGraph{
         stroke('#222222');
 
         translate(width / 2, height / 2);
-        rect(0, -75, 80, 400);
+        rect(this.tempBarBaseDat.x, this.tempBarBaseDat.y, this.tempBarBaseDat.w, this.tempBarBaseDat.h);
         
 
         pop();
@@ -41,10 +50,13 @@ class BarGraph{
         
         let slider = getSliderDat(); // get the info for the slider
         
-        strokeWeight(10);
+        strokeWeight(2);
         stroke('#222222');
         fill(slider.color);
-        rect(0,-75, slider.width, slider.height);
+        rect(this.tempBarBaseDat.x + ( (this.tempBarBaseDat.w - slider.width) / 2 ),
+            this.tempBarBaseDat.y + ( (this.tempBarBaseDat.h - slider.height) / 2 ),
+            slider.width,
+            slider.height);
         
         pop();
     }
@@ -55,7 +67,7 @@ class BarGraph{
  * NEED TO GENERATE GRADIENT BASED OFF HEAT
  */
 function getSliderDat(){
-    const width = 75;
+    const width = 60;
     const color = '#ff6a4a';
     const height = getHeightForTemp();
 
