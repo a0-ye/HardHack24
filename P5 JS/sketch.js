@@ -1,18 +1,19 @@
-let tempGraph;
-let temps = [];
-let count = 0;
+let TempBar;
+// let temps = [];
+let temp = 25
 
-for (let i = 20; i < 41; i++) {
-    // console.log(temps);
-    temps.push(i)
-}
+// let count = 0;
+// for (let i = 20; i < 41; i++) {
+//     // console.log(temps);
+//     temps.push(i)
+// }
 // console.log(temps)
 
-function getTemp() {
-    count++;
-    // console.log(count%20);
-    return temps[count%20];
-}
+// function getTemp() {
+//     count++;
+//     // console.log(count%20);
+//     return temps[count%20];
+// }
 
 
 function setup(){
@@ -20,20 +21,20 @@ function setup(){
     frameRate(60);
     angleMode(DEGREES);
 
-    tempGraph = new BarGraph();
-    tempGraph.generateTarget();
+    TempBar = new BarGraph();
+    TempBar.generateTarget();
 
 }
 
 function draw(){
     background(220);
 
-    temp = getTemp();
-    if(tempGraph.finished == false){
-        tempGraph.displayBarBase();
-        tempGraph.displaySliderBar(temp);
-        tempGraph.displayTargetZone();
-        tempGraph.zoneCheck();
+    // temp = getTemp();
+    if(TempBar.finished == false){
+        TempBar.displayBarBase();
+        TempBar.displaySliderBar(temp);
+        TempBar.displayTargetZone();
+        TempBar.zoneCheck();
     } else{
         alert("VICTORY: YOU DID IT!!!");
     }
@@ -151,7 +152,7 @@ class BarGraph{
      * when we're in the loop, we start comparing curr time to the start time because we stop updating it
      */
     zoneCheck(){
-        if(temps <= this.targetRangeDat.upper && temps >= this.targetRangeDat.lower){
+        if(temp <= this.targetRangeDat.upper && temp >= this.targetRangeDat.lower){
             if( millis() - this.zoneCheckDat.startTime >= 5000){    // 5 seconds
                 this.finished = true;
             }
