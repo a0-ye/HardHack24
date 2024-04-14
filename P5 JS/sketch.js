@@ -375,18 +375,11 @@ class StickGame{
     }
 
     display(){
-        if(this.finished == 0){
-            this.scaleSlider();
-            this.displayMeterBase();
-            this.displayMeterSlider();
-            this.checkTarget();
-        } else {
-            background(220);
-            text("You Did It !!!",width/2,height/2);
-            if(millis() - this.previousTime >= 3000) {
-                this.done = true;
-            }
-        }
+        this.scaleSlider();
+        this.displayMeterBase();
+        this.displayMeterSlider();
+
+        this.checkTarget();
 
     }
 
@@ -422,9 +415,7 @@ class StickGame{
             this.ratioDat.j2x >= threshold &&
             this.ratioDat.j2y >= threshold ){
             if( millis() - this.targetStart >= 5000){    // 5 seconds
-                //DISPLAY VICTORY
-                this.targetStart = millis(); // save millis to reset timer for the 3 second delay                
-                this.finished = true;
+                this.done = true;
             }
         } else {
             this.targetStart = millis();
