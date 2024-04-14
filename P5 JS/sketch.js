@@ -3,20 +3,16 @@ let temps = [];
 let count = 0;
 
 for (let i = 20; i < 41; i++) {
-    console.log(temps);
+    // console.log(temps);
     temps.push(i)
 }
-console.log(temps)
+// console.log(temps)
 
 function getTemp() {
     count++;
-    console.log(count%20);
+    // console.log(count%20);
     return temps[count%20];
 }
-
-
-
-
 
 
 function setup(){
@@ -25,17 +21,17 @@ function setup(){
     angleMode(DEGREES);
 
     tempGraph = new BarGraph();
-    
-
+    tempGraph.generateTarget();
 
 }
 
 function draw(){
     background(220);
 
-    temp = getTemp()
+    temp = getTemp();
     tempGraph.displayBarBase();
     tempGraph.displaySliderBar(temp);
+    tempGraph.displayTargetZone();
 
     circle(mouseX, mouseY, 30);
 }
@@ -43,7 +39,12 @@ function draw(){
 class BarGraph{
     constructor(){}
 
-    tempBarBaseDat = {x:0,y:-75,w:80,h:400};
+    tempBarBaseDat = {x:0,y:-75,width:80,height:400};
+    targetRangeDat = {upper:0,lower:0,width:0,height:0};
+    
+    // finished is a flag for whether or not we are done with our game!
+    finished = 0;
+
 
     displayBarBase(){
         push();
@@ -52,7 +53,7 @@ class BarGraph{
         stroke('#222222');
 
         translate(width / 2, height / 2);
-        rect(this.tempBarBaseDat.x, this.tempBarBaseDat.y, this.tempBarBaseDat.w, this.tempBarBaseDat.h);
+        rect(this.tempBarBaseDat.x, this.tempBarBaseDat.y, this.tempBarBaseDat.width, this.tempBarBaseDat.height);
         
 
         pop();
@@ -69,17 +70,33 @@ class BarGraph{
         stroke('#222222');
         fill(slider.color);
 
-        rect(this.tempBarBaseDat.x + ( (this.tempBarBaseDat.w - slider.width) / 2 ),
-            this.tempBarBaseDat.y + this.tempBarBaseDat.h - 5,
+        rect(this.tempBarBaseDat.x + ( (this.tempBarBaseDat.width - slider.width) / 2 ),
+            this.tempBarBaseDat.y + this.tempBarBaseDat.height - 5,
             slider.width,
             -slider.height);
         
         pop();
     }
 
+    displayTargetZone(){
+        push();
+
+        translate(width / 2, height / 2);
+
+        strokeWeight(2);
+        stroke('#222222');
+        fill(253, 169, 43,50);
+        rect(this.tempBarBaseDat.x,
+            (this.tempBarBaseDat.y + this.tempBarBaseDat.height - 5) - this.getHeightForTemp(this.targetRangeDat.upper),
+            this.targetRangeDat.width,
+            this.targetRangeDat.height,
+        );
+        pop();
+    }
+
     getHeightForTemp(temp) {
         // padding on top and bottom, 5 each
-        let range = this.tempBarBaseDat.h - 10;
+        let range = this.tempBarBaseDat.height - 10;
     
         let result = (temp - 20) / 20 * range;
         return result;
@@ -101,42 +118,19 @@ class BarGraph{
     }
 
     
+    /**
+     * generates a target range between 25 and 38
+     * (lower bound is -2 for 3 total degrees range)
+     */
+    generateTarget(){
+        this.targetRangeDat.upper = random(25, 38);
+        this.targetRangeDat.lower = this.targetRangeDat.upper - 2;
+        this.targetRangeDat.width = this.tempBarBaseDat.width;
+        this.targetRangeDat.height = 30;
+
+        console.log("Upper: ",this.targetRangeDat.upper);
+        console.log("height proportional: ",this.getHeightForTemp(this.targetRangeDat.upper) / this.tempBarBaseDat.height);
+    }
+    
 }
 
-// /**
-//  * packages slider info into returned object
-//  * NEED TO GENERATE GRADIENT BASED OFF HEAT
-//  */
-// function getSliderDat(){
-//     const width = 60;
-//     const color = '#ff6a4a';
-//     const height = getHeightForTemp();
-
-//     return {width, height, color};
-// }
-
-
-// /**
-//  * Get height gradient
-//  * 
-//  * the range of temp is apparently 23 to 38 ish... figure out a formula
-//  */
-// function getHeightForTemp() {
-//     // padding on top and bottom, 5 each
-//     range = this.tempBarBaseDat.h - 10;
-
-//     let result = getTemp() + 25;
-//     if (result < 30){
-//         result = 45;
-//     } else if (result > 375){
-//         result = 375;
-//     }
-//     return result;
-// }
-
-/**
- * generates a random temperature
- */
-function generateTemp(){
-    return random(23, 38);
-}
