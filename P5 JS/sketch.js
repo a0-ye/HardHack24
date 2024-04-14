@@ -1,120 +1,86 @@
-let port, reader, writer;
-let reactionGame;
-let previousCommand;
+let tempGraph;
+let temp = 25;
 
-const sensorCodesEnum = {
-    JOY1: 0,
-    JOY2: 1,
-};
-const {JOY1, JOY2} = sensorCodesEnum;
-
-
-let commandHandler = {
-  "MAZE": handleMaze,
-  "KNOB": handleKnob,
-  "REAC": handleReaction
-};
-
-async function connectSerial(){
-    noLoop();
-    ({ port, reader, writer } = await getPort(115200));
-    loop();
-}
-
-async function setup() {
+function setup(){
     createCanvas(windowWidth, windowHeight);
     frameRate(60);
     angleMode(DEGREES);
 
-    //await connectSerial();
-
-    reactionGame = new ReactionGame();
-    textSize(25);
+    tempGraph = new BarGraph();
 
 }
-
-
-
-// async function draw() {
-//     while(true) {
-//         const {value, done} = await reader.read();
-//
-//         if (done) {
-//             reader.releaseLock();
-//             break;
-//         }
-//
-//         background(220);
-//
-//         let tokens = value.split(',');
-//         commandHandler[tokens[0]]();
-//
-//         circle(mouseX, mouseY, 30);
-//
-//     }
-// }
 
 function draw(){
     background(220);
 
-    handleReaction();
+    tempGraph.displayBarBase();
+    tempGraph.displaySliderBar();
+
+    circle(mouseX, mouseY, 30);
 }
 
-function handleKnob(){
-}
+class BarGraph{
+    constructor(){}
 
-function handleMaze(){
-    circle(100, 100, 50);
-}
+    displayBarBase(){
+        push();
 
-function handleReaction(){
-    reactionGame.display();
-}
+        fill('#808080');
+        stroke('#222222');
 
-class ReactionGame{
-    constructor() {
-        this.start = millis();
-        this.previosTime = millis();
-        this.currentTime = millis();
-        this.score = 0;
-        this.count = 0;
-        this.delta = random(500, 4000);
+        translate(width / 2, height / 2);
+        rect(0, -75, 80, 400);
+        
+
+        pop();
     }
 
-    display(){
-        this.currentTime = millis();
-        if(this.currentTime - this.start > 3000) {
-            if (this.count < 10) {
-                text("score " + this.score.toFixed(0), 50, 50);
-
-                if (this.currentTime - this.previosTime > this.delta) {
-                    push();
-                    translate(width / 2, height / 2);
-                    fill(125, 0, 0)
-                    square(-50, -50, 100);
-                    pop();
-
-                    if (keyIsPressed && keyCode === 32) {
-                        this.score += 30000 / (this.currentTime - this.previosTime - this.delta);
-                        this.previosTime = millis();
-                        this.delta = random(500, 4000 - this.count * 400);
-                        this.count++;
-                    }
-                } else if (this.currentTime - this.previosTime >= 350 && keyIsPressed && keyCode === 32) {
-                    this.score -= 50;
-                }
-
-            } else {
-                push();
-                textAlign(CENTER);
-                textSize(70);
-                text("score " + this.score.toFixed(0), width / 2, height / 2);
-                pop();
-            }
-        }else{
-            push();
-            text()
-            pop();
-        }
+    displaySliderBar(){
+        push();
+        translate(width / 2, height / 2);
+        
+        let slider = getSliderDat(); // get the info for the slider
+        
+        strokeWeight(10);
+        stroke('#222222');
+        fill(slider.color);
+        rect(0,-75, slider.width, slider.height);
+        
+        pop();
     }
+}
+
+/**
+ * packages slider info into returned object
+ * NEED TO GENERATE GRADIENT BASED OFF HEAT
+ */
+function getSliderDat(){
+    const width = 75;
+    const color = '#ff6a4a';
+    const height = getHeightForTemp();
+
+    return {width, height, color};
+}
+
+
+/**
+ * Get height gradient
+ * 
+ * the range of temp is apparently 23 to 38 ish... figure out a formula
+ */
+function getHeightForTemp() {
+    let result = temp + 25;
+    if (result < 30){
+        result = 45;
+    } else if (result > 375){
+        result = 375;
+    }
+    return result;
+}
+
+/**
+ * generates a random temperature
+ */
+function generateTemp(){
+    return random(23, 38);
 }
