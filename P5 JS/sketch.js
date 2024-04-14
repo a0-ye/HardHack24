@@ -330,16 +330,16 @@ class KnobGame{
 class StickGame{
     constructor(){
         this.targetDat = this.generateTarget();
-        this.baseDat = {x:0,y:0,r:50}   
-        this.sliderDat = {x:0,y:0,r:10} 
+        this.baseDat = {x:0,y:0,r:300};
+        this.sliderDat = {x:0,y:0,r:100};
         this.targetStart = millis();
         this.ratioDat = {j1x:0,j1y:0,j2x:0,j2y:0}
 
     }
 
     generateTarget(){
-        upper = 1024
-        lower = 0
+        let upper = 1024
+        let lower = 0
         return {t1x:random(lower,upper),
             t1y:random(lower,upper),
             t2x:random(lower,upper),
@@ -352,45 +352,45 @@ class StickGame{
 
     scaleSlider(){
         //lower bound value is 10, highest is 50
-        lower = 10
-        total = 50 - lower
-        sharedAmount = total / 4
+        let lower = 100;
+        let total = this.baseDat.r - lower
+        let sharedAmount = total / 4;
+        let sum = 0;
         
-        this.ratioDat.j1x = this.ratio(knob1.x, this.targetDat.t1x)
-        sum += this.ratioDat.j1x;
+        this.ratioDat.j1x = this.ratio(joy1.x, this.targetDat.t1x)
+        sum += this.ratioDat.j1x * sharedAmount;
 
-        this.ratioDat.j1y = this.ratio(knob1.y, this.targetDat.t1y)
-        sum += this.ratioDat.j1y;
+        this.ratioDat.j1y = this.ratio(joy1.y, this.targetDat.t1y)
+        sum += this.ratioDat.j1y * sharedAmount;
 
-        this.ratioDat.j2x = this.ratio(knob2.x, this.targetDat.t2x)
-        sum += this.ratioDat.j2x;
+        this.ratioDat.j2x = this.ratio(joy2.x, this.targetDat.t2x)
+        sum += this.ratioDat.j2x * sharedAmount;
         
-        this.ratioDat.j2y = this.ratio(knob2.y, this.targetDat.t2y)
-        sum += this.ratioDat.j2y;
+        this.ratioDat.j2y = this.ratio(joy2.y, this.targetDat.t2y)
+        sum += this.ratioDat.j2y * sharedAmount;
 
 
         this.sliderDat.r = lower + sum;
-        // 1 - (abs (target - current )) / 1024
         
     }
-
-
 
     display(){
         this.scaleSlider();
         this.displayMeterBase();
         this.displayMeterSlider();
 
+        this.checkTarget();
+
     }
 
     displayMeterBase(){
         push();
         translate(width / 2, height / 3);
-        
-        fill(57, 253, 43);
+
+        fill('#808080');
         stroke('#222222');
 
-        circle(this.baseDat.x,this.baseDat.y,this.baseDat.r);
+        circle(this.baseDat.x, this.baseDat.y, this.baseDat.r);
 
         pop();
     }
@@ -398,21 +398,22 @@ class StickGame{
     displayMeterSlider(){
         push();
         translate(width / 2, height / 3);
-        
-        fill('#808080');
+
+        fill(57, 253, 43);
         stroke('#222222');
 
-        circle(this.baseDat.x,this.baseDat.y,this.baseDat.r);
+        circle(this.sliderDat.x, this.sliderDat.y, this.sliderDat.r);
 
         pop();
     }
 
     checkTarget(){
+        let threshold = 0.08
         //95% threshhold for 5 seconds
-        if(this.ratioDat.j1x >= 0.95 &&
-            this.ratioDat.j1y >= 0.95 &&
-            this.ratioDat.j2x >= 0.95 &&
-            this.ratioDat.j2y >= 0.95){
+        if(this.ratioDat.j1x >=  threshold &&
+            this.ratioDat.j1y >= threshold &&
+            this.ratioDat.j2x >= threshold &&
+            this.ratioDat.j2y >= threshold ){
             if( millis() - this.targetStart >= 5000){    // 5 seconds
                 this.done = true;
             }
