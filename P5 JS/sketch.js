@@ -334,6 +334,7 @@ class StickGame{
         this.sliderDat = {x:0,y:0,r:100};
         this.targetStart = millis();
         this.ratioDat = {j1x:0,j1y:0,j2x:0,j2y:0}
+        this.finished = false;
 
     }
 
@@ -375,7 +376,7 @@ class StickGame{
     }
 
     display(){
-        if(this.finished == 0){
+        if(this.finished === false){
             this.scaleSlider();
             this.displayMeterBase();
             this.displayMeterSlider();
@@ -383,7 +384,7 @@ class StickGame{
         } else {
             background(220);
             text("You Did It !!!",width/2,height/2);
-            if(millis() - this.previousTime >= 3000) {
+            if(millis() - this.targetStart >= 3000) {
                 this.done = true;
             }
         }
@@ -406,7 +407,7 @@ class StickGame{
         push();
         translate(width / 2, height / 3);
 
-        fill(57, 253, 43, 1 - this.timeFrac);
+        fill(57, 253, 43, (1 - this.timeFrac) * 100);
         stroke('#222222');
 
         circle(this.sliderDat.x, this.sliderDat.y, this.sliderDat.r);
@@ -415,12 +416,13 @@ class StickGame{
     }
 
     checkTarget(){
-        let threshold = 0.08
+        let threshold = 0.1;
         //95% threshhold for 5 seconds
-        if(this.ratioDat.j1x >=  threshold &&
-            this.ratioDat.j1y >= threshold &&
-            this.ratioDat.j2x >= threshold &&
-            this.ratioDat.j2y >= threshold ){
+        console.log(this.targetDat);
+        if(this.ratioDat.j1x <=  threshold &&
+            this.ratioDat.j1y <= threshold &&
+            this.ratioDat.j2x <= threshold &&
+            this.ratioDat.j2y <= threshold ){
             if( millis() - this.targetStart >= 5000){    // 5 seconds
                 //DISPLAY VICTORY
                 this.targetStart = millis(); // save millis to reset timer for the 3 second delay                
