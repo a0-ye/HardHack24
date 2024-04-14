@@ -375,11 +375,18 @@ class StickGame{
     }
 
     display(){
-        this.scaleSlider();
-        this.displayMeterBase();
-        this.displayMeterSlider();
-
-        this.checkTarget();
+        if(this.finished == 0){
+            this.scaleSlider();
+            this.displayMeterBase();
+            this.displayMeterSlider();
+            this.checkTarget();
+        } else {
+            background(220);
+            text("You Did It !!!",width/2,height/2);
+            if(millis() - this.previousTime >= 3000) {
+                this.done = true;
+            }
+        }
 
     }
 
@@ -399,7 +406,7 @@ class StickGame{
         push();
         translate(width / 2, height / 3);
 
-        fill(57, 253, 43);
+        fill(57, 253, 43, 1 - this.timeFrac);
         stroke('#222222');
 
         circle(this.sliderDat.x, this.sliderDat.y, this.sliderDat.r);
@@ -415,11 +422,15 @@ class StickGame{
             this.ratioDat.j2x >= threshold &&
             this.ratioDat.j2y >= threshold ){
             if( millis() - this.targetStart >= 5000){    // 5 seconds
-                this.done = true;
+                //DISPLAY VICTORY
+                this.targetStart = millis(); // save millis to reset timer for the 3 second delay                
+                this.finished = true;
             }
         } else {
             this.targetStart = millis();
         }
+        //get timer ratio for color fill
+        this.timeFrac = (5000 - (millis() - this.targetStart)) / 5000
     }
 
 
