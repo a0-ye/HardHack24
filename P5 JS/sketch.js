@@ -8,6 +8,8 @@ let knob2;
 let knob3;
 let knob4;
 let temp;
+let imu;
+let c = 0;
 
 // let reactionGame;
 // let tempGame;
@@ -30,10 +32,11 @@ const {JOY1, JOY2, KNOB1, KNOB2, KNOB3, KNOB4, TEMP, PEDAL, SPACE, INPUT_SIZE} =
 const gameEnums = {
     REACT_GAME: 0,
     TEMP_GAME: 1,
-    KNOB_GAME: 2,
-    STICK_GAME:3
+    KNOB_GAME: 4,
+    STICK_GAME:3,
+    MAZE_GAME: 2
 }
-const {REACT_GAME, TEMP_GAME, KNOB_GAME, STICK_GAME} = gameEnums;
+const {REACT_GAME, TEMP_GAME, KNOB_GAME, STICK_GAME, MAZE_GAME} = gameEnums;
 
 async function connectSerial(){
     noLoop();
@@ -58,6 +61,8 @@ async function setup() {
     knob3 = new Knob();
     knob4 = new Knob();
 
+    imu = new IMU();
+
 }
 
 async function draw() {
@@ -72,25 +77,26 @@ async function draw() {
         background(220);
 
         let tokens = value.split(',');
-        text(tokens, 500, height - 50);
+        //text(tokens, 500, height - 50);
         readAll(tokens);
 
         handleGame();
 
-        circle(mouseX, mouseY, 30);
     }
 }
 
 function handleGame(){
-    if(game === undefined || game.done)
-        game = getGame(floor(random(0, Object.keys(gameEnums).length)));
+    if(game === undefined || game.done) {
+        game = getGame(c);
+        c++;
+        c %= Object.keys(gameEnums).length
+    }
 
     else
         game.display();
 }
 
 function getGame(gameCode){
-    gameCode = STICK_GAME;
     switch (gameCode){
         case REACT_GAME:
             return new ReactionGame();
@@ -103,7 +109,15 @@ function getGame(gameCode){
 
         case STICK_GAME:
             return new StickGame();
+
+        case MAZE_GAME:
+            return new Maze(20, 20);
     }
+}
+
+function keyPressed(){
+    if(keyCode === 77)
+        game = new Maze(30, 30);
 }
 
 function readAll(tokens){
@@ -117,6 +131,186 @@ function readAll(tokens){
     knob4.read(tokens[7]);
     temp = tokens[8];
     pedal = tokens[9];
+
+    imu.ax = tokens[10];
+    imu.ay = tokens[11];
+
+}
+
+class Maze{
+    constructor(cols, rows){
+        this.cols = cols;
+        this.rows = rows;
+
+        this.containerParameters = {x: 0, y: 0, contWidth: 600, contHeight: 600}
+
+        this.squareSize = this.containerParameters.contWidth / this.cols;
+
+        this.circleD = 10;
+        this.circlePos = createVector(1.5 * this.squareSize, 1.5 * this.squareSize);
+        this.circleVel = createVector(0, 0);
+        this.circleAccel = createVector(0, 0);
+
+        this.mazeMap = [];
+        this.generateMapArray();
+        this.done = false;
+    }
+
+    generateMapArray() {
+        for (let i = 0; i < this.rows + 1; i++) {
+            this.mazeMap.push([]);
+            for (let j = 0; j < this.cols + 1; j++) {
+                // randomize wall or not
+                if (Math.random() > 0.25) {
+                    this.mazeMap[i].push(0) // not wall
+                } else {
+                    if (i < 3 && j < 3) {
+                        this.mazeMap[i].push(0) // not wall
+                    } else if (this.rows - 4 < i  && this.cols - 4 < j) {
+                        this.mazeMap[i].push(0) // not wall
+                    } else {
+                        this.mazeMap[i].push(1) // wall
+                    }
+                }
+            }
+        }
+        // set perimeter to be walls
+        for (let i = 0; i < this.cols; i++) {
+            this.mazeMap[0][i] = 1;
+            this.mazeMap[this.rows - 1][i] = 1;
+        }
+
+        for (let j = 0; j < this.cols; j++) {
+            this.mazeMap[j][0] = 1;
+            this.mazeMap[j][this.rows - 1] = 1;
+        }
+    }
+
+    display() {
+        push();
+        fill('#808080');
+        stroke('#222222');
+        translate(width / 2 - 300, height / 2 - 300);
+        rect(this.containerParameters.x, this.containerParameters.y, this.containerParameters.contWidth, this.containerParameters.contHeight);
+        for (let i = 0; i < this.rows; i++) {
+            for (let j = 0; j < this.cols; j++) {
+                if (this.mazeMap[i][j] === 1) {
+                    fill(0, 0, 0);
+                } else {
+                    fill(150, 150, 150);
+                }
+                square(i * this.squareSize, j * this.squareSize, this.squareSize);
+            }
+        }
+        this.displayCircle();
+        pop();
+    }
+
+    collisionDetection() {
+        push();
+        let neighs = this.generateNeighborCoords();
+        console.log(neighs);
+        neighs = Array.from(neighs);
+
+        neighs.forEach((neigh)=>{
+            let a = JSON.parse(neigh);
+            if (this.mazeMap[a[0]][a[1]] === 1) {  // if neighbor is wall
+                if (a[2] === "left") {
+                    this.circlePos.x = (a[0] + 1) * this.squareSize + this.circleD / 2;
+                    this.circleVel.x = 0;
+                    this.circleAccel.x = 0;
+
+                } else if (a[2] === "top") {
+                    this.circlePos.y = (a[1] + 1) * this.squareSize + this.circleD / 2;
+                    this.circleVel.y = 0;
+                    this.circleAccel.y = 0;
+
+                } else if (a[2] === "right") {
+                    this.circlePos.x = a[0] * this.squareSize - this.circleD / 2;
+                    this.circleVel.x = 0;
+                    this.circleAccel.x = 0;
+
+                } else {
+                    this.circlePos.y = a[1] * this.squareSize - this.circleD / 2;
+                    this.circleVel.y = 0;
+                    this.circleAccel.y = 0;
+                }
+
+                fill('red');
+                square(a[0] * this.squareSize, a[1] * this.squareSize, this.squareSize);
+            }
+
+        })
+
+        pop();
+    }
+
+    generateNeighborCoords() {
+        let squares = new Set();
+        let coords = []
+
+        // the four "vertexes"
+        let circleTop = this.circlePos.y - this.circleD / 2;
+        let circleBottom = this.circlePos.y + this.circleD / 2;
+
+        let circleLeft = this.circlePos.x - this.circleD / 2;
+        let circleRight = this.circlePos.x + this.circleD / 2;
+
+        console.log(this.circlePos);
+        console.log(this.circlePos.x);
+
+        squares.add(JSON.stringify([Math.floor(this.circlePos.x / this.squareSize), Math.floor(this.circlePos.y / this.squareSize), "middle"]));
+
+        let leftNei = JSON.stringify([Math.floor(circleLeft / this.squareSize), Math.floor(this.circlePos.y / this.squareSize), "left"]);
+        let topNei = JSON.stringify([Math.floor(this.circlePos.x / this.squareSize), Math.floor(circleTop / this.squareSize), "top"]);
+        let rightNei = JSON.stringify([Math.floor(circleRight / this.squareSize), Math.floor(this.circlePos.y / this.squareSize), "right"]);
+        let bottomNei = JSON.stringify([Math.floor(this.circlePos.x / this.squareSize), Math.floor(circleBottom / this.squareSize), "bottom"]);
+
+        // let potentialNeis = [leftNei, topNei, rightNei, bottomNei];
+
+        squares.add(leftNei);
+        squares.add(topNei);
+        squares.add(rightNei);
+        squares.add(bottomNei);
+
+        return squares;
+    }
+
+    displayCircle() {
+        push();
+        this.circleAccel.set(float(imu.ax) / 10000, -float(imu.ay) / 10000);
+        this.circleVel.add(this.circleAccel);
+        this.circlePos.add(this.circleVel);
+        if ((this.circlePos.x - this.squareSize / 2 >= (this.cols - 2) * this.squareSize)  && (this.circlePos.y - this.squareSize / 2 >= (this.rows - 2) * this.squareSize)) {
+            this.stopCircle();
+            this.done = true
+            // fill('green');
+            // square((this.rows - 1) * this.squareSize, (this.cols - 1) * this.squareSize, this.squareSize);
+            for (let i = 0; i < this.rows; i++) {
+                for (let j = 0; j < this.cols; j++) {
+                    if (this.mazeMap[i][j] === 1) {
+                        fill(0, 0, 0);
+                    } else {
+                        fill('green');
+                    }
+                    square(i * this.squareSize, j * this.squareSize, this.squareSize);
+                }
+            }
+        }
+        this.collisionDetection();
+        fill(50, 50, 50);
+        console.log(this.circlePos.x);
+        circle(this.circlePos.x, this.circlePos.y, this.circleD);
+        pop();
+    }
+
+    stopCircle() {
+        this.circleVel.x = 0;
+        this.circleVel.y = 0;
+
+        this.circleAccel.x = 0;
+        this.circleAccel.y = 0;
+    }
 }
 
 class ReactionGame{
@@ -135,7 +329,7 @@ class ReactionGame{
         this.currentTime = millis();
 
         if(this.currentTime - this.start > 3000) {
-            if (this.count < 10) {
+            if (this.count < 5) {
                 text("score " + this.score.toFixed(0), 50, 50);
 
                 if (this.currentTime - this.previousTime > this.delta) {
@@ -329,11 +523,12 @@ class KnobGame{
 
 class StickGame{
     constructor(){
-        this.targetDat = this.generateTarget();
+        this.targetVal = this.generateTarget();
         this.baseDat = {x:0,y:0,r:300};
         this.sliderDat = {x:0,y:0,r:100};
         this.targetStart = millis();
-        this.ratioDat = {j1x:0,j1y:0,j2x:0,j2y:0}
+        this.timeFrac = (5000 - (millis() - this.targetStart)) / 5000
+        this.ratioVal = 0;
         this.finished = false;
 
     }
@@ -341,10 +536,11 @@ class StickGame{
     generateTarget(){
         let upper = 1024
         let lower = 0
-        return {t1x:random(lower,upper),
-            t1y:random(lower,upper),
-            t2x:random(lower,upper),
-            t2y:random(lower,upper)}
+        return this.distanceInR4(random(lower,upper),random(lower,upper),random(lower,upper),random(lower,upper))
+    }
+
+    distanceInR4(a,b,c,d){
+        return sqrt(pow(a,2) + pow(b,2) + pow(c,2) + pow(d, 2))
     }
 
     ratio(current,target){
@@ -354,40 +550,21 @@ class StickGame{
     scaleSlider(){
         //lower bound value is 10, highest is 50
         let lower = 100;
-        let total = this.baseDat.r - lower
-        let sharedAmount = total / 4;
-        let sum = 0;
-        
-        this.ratioDat.j1x = this.ratio(joy1.x, this.targetDat.t1x)
-        sum += this.ratioDat.j1x * sharedAmount;
+        let diff = this.baseDat.r - lower
 
-        this.ratioDat.j1y = this.ratio(joy1.y, this.targetDat.t1y)
-        sum += this.ratioDat.j1y * sharedAmount;
+        //ratio of similarity in R4
+        this.ratioVal = this.ratio(this.distanceInR4(joy1.x,joy1.y,joy2.x,joy2.y), this.targetVal)
 
-        this.ratioDat.j2x = this.ratio(joy2.x, this.targetDat.t2x)
-        sum += this.ratioDat.j2x * sharedAmount;
-        
-        this.ratioDat.j2y = this.ratio(joy2.y, this.targetDat.t2y)
-        sum += this.ratioDat.j2y * sharedAmount;
+        this.sliderDat.r = lower + (diff * this.ratioVal);
 
-
-        this.sliderDat.r = lower + sum;
-        
     }
 
     display(){
-        if(this.finished === false){
-            this.scaleSlider();
-            this.displayMeterBase();
-            this.displayMeterSlider();
-            this.checkTarget();
-        } else {
-            background(220);
-            text("You Did It !!!",width/2,height/2);
-            if(millis() - this.targetStart >= 3000) {
-                this.done = true;
-            }
-        }
+        this.scaleSlider();
+        this.displayMeterBase();
+        this.displayMeterSlider();
+
+        this.checkTarget();
 
     }
 
@@ -416,17 +593,14 @@ class StickGame{
     }
 
     checkTarget(){
-        let threshold = 0.1;
+        let threshold = 0.08;
         //95% threshhold for 5 seconds
-        console.log(this.targetDat);
-        if(this.ratioDat.j1x <=  threshold &&
-            this.ratioDat.j1y <= threshold &&
-            this.ratioDat.j2x <= threshold &&
-            this.ratioDat.j2y <= threshold ){
+        console.log("ratioval: ", this.ratioVal)
+        // console.log("less than or equal to: ", this.ratioVal)
+
+        if(this.ratioVal >= 1 - threshold ){
             if( millis() - this.targetStart >= 5000){    // 5 seconds
-                //DISPLAY VICTORY
-                this.targetStart = millis(); // save millis to reset timer for the 3 second delay                
-                this.finished = true;
+                this.done = true;
             }
         } else {
             this.targetStart = millis();
@@ -457,5 +631,12 @@ class Joystick{
     constructor(){
         this.x = 0;
         this.y = 0;
+    }
+}
+
+class IMU{
+    constructor() {
+        this.ax = 0;
+        this.ay = 0;
     }
 }

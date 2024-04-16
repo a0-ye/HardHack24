@@ -1,3 +1,8 @@
+#include <Adafruit_MPU6050.h>
+
+Adafruit_MPU6050 mpu;
+Adafruit_Sensor *mpu_accel;
+
 enum sensorCodesEnum { 
   JOY1,
   JOY2,
@@ -7,6 +12,7 @@ enum sensorCodesEnum {
   KNOB4,
   TEMP,
   PEDAL,
+  IMU,
   SENSORS_SIZE 
 };
 
@@ -74,6 +80,18 @@ KnobDat knob4(PIN_K4CLK, PIN_K4DT);
 
 void setup() {
   Serial.begin(115200);
+  while (!Serial)
+  delay(10); // will pause Zero, Leonardo, etc until serial console opens
+
+
+  if (!mpu.begin()) {
+    Serial.println("Failed to find MPU6050 chip");
+
+    while (1) {
+      delay(10);
+    }
+  }
+  mpu_accel = mpu.getAccelerometerSensor();
 }
 
 void loop() {
@@ -125,6 +143,10 @@ void handleSensor(short code) {
       handlePedal();
       break;
 
+    case IMU:
+      handleIMU();
+      break;
+
   }
 }
 
@@ -156,6 +178,16 @@ void handleTemp(){
 
 void handlePedal(){
   Serial.print(analogRead(PIN_PEDAL));
+  Serial.print(',');
+}
+
+void handleIMU(){
+  sensors_event_t accel;
+  mpu_accel->getEvent(&accel);
+
+  Serial.print(accel.acceleration.x);
+  Serial.print(',');
+  Serial.print(accel.acceleration.y);
   Serial.print(',');
 }
 
