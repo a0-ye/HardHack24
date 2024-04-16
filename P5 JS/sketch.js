@@ -1,5 +1,4 @@
 let port, reader, writer;
-let previousCommand;
 let pedal;
 let joy1;
 let joy2;
@@ -77,7 +76,6 @@ async function draw() {
         background(220);
 
         let tokens = value.split(',');
-        //text(tokens, 500, height - 50);
         readAll(tokens);
 
         handleGame();
@@ -247,7 +245,6 @@ class Maze{
 
     generateNeighborCoords() {
         let squares = new Set();
-        let coords = []
 
         // the four "vertexes"
         let circleTop = this.circlePos.y - this.circleD / 2;
@@ -529,7 +526,7 @@ class StickGame{
         this.targetStart = millis();
         this.timeFrac = (5000 - (millis() - this.targetStart)) / 5000
         this.ratioVal = 0;
-        this.finished = false;
+        this.done = false;
 
     }
 
